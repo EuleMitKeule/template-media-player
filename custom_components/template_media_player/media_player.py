@@ -1,6 +1,6 @@
 """Template Media Player Component for Home Assistant."""
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Sequence, Any
 import logging
 from typing import Any, cast
 
@@ -37,6 +37,7 @@ from .const import (
     CONF_ATTRIBUTES,
     CONF_BASE_MEDIA_PLAYER_ENTITY_ID,
     CONF_BROWSE_MEDIA_ENTITY_ID,
+    CONF_BROWSE_MEDIA_SCRIPT,
     CONF_CLEAR_PLAYLIST_SCRIPT,
     CONF_DEVICE_CLASS,
     CONF_GLOBAL_TEMPLATE,
@@ -55,6 +56,7 @@ from .const import (
     CONF_PLAY_MEDIA_SCRIPT,
     CONF_REPEAT_SET_SCRIPT,
     CONF_SEARCH_MEDIA_ENTITY_ID,
+    CONF_SEARCH_MEDIA_SCRIPT,
     CONF_SERVICE_SCRIPTS,
     CONF_SHUFFLE_SET_SCRIPT,
     CONF_SOUND_MODE_SCRIPTS,
@@ -118,6 +120,38 @@ async def async_setup_platform(
         )
 
     async_add_entities(media_players)
+
+
+def build_browse_media(
+    item: dict[str, Any],
+): BrowseMedia:
+    return BrowseMedia(
+        media_class: item["media_class"],
+        media_content_id: item["media_content_id"],
+        media_content_type: item["media_content_type"],
+        title: item["title"],
+        can_play: item["can_play"],
+        can_expand: item["can_expand"],
+        children: [
+            process_search_results(child)
+            for child
+            in item.get("children", [])
+        ]
+        children_media_class: item.get("children_media_class", None),
+        thumbnail: item.get("thumbnail", None),
+        not_shown: item.get("not_shown", 0),
+        can_search: item.get("can_search", False),
+    )
+
+
+def process_search_results(
+    results: list[dict[str, Any]],
+): Sequence[BrowseMedia]:
+    return [
+        build_browse_media(item)
+        for item
+        in results
+    ]
 
 
 class TemplateMediaPlayer(TemplateEntity, MediaPlayerEntity):
@@ -325,6 +359,16 @@ class TemplateMediaPlayer(TemplateEntity, MediaPlayerEntity):
             and CONF_UNJOIN_SCRIPT in self._service_scripts
         ):
             support |= MediaPlayerEntityFeature.GROUPING
+        if (
+            self._search_media_entity_id is not None
+            or CONF_SEARCH_MEDIA_SCRIPT in self._service_scripts
+        ):
+            support |= MediaPlayerEntityFeature.SEARCH_MEDIA
+        if (
+            self._browse_media_entity_id is not None
+            or CONF_BROWSE_MEDIA_SCRIPT in self._service_scripts
+        ):
+            support |= MediaPlayerEntityFeature.BROWSE_MEDIA
 
         return support
 
@@ -659,6 +703,16 @@ class TemplateMediaPlayer(TemplateEntity, MediaPlayerEntity):
         The BrowseMedia instance will be used by the
         "media_player/browse_media" websocket command.
         """
+        if CONF_BROWSE_MEDIA_SCRIPT in self._service_scripts:
+            return build_browse_media(
+                await self._service_scripts[CONF_BROWSE_MEDIA_SCRIPT].async_run(
+                    {
+                        "media_conten_type": query.media_type,
+                        "media_content_id": query.media_id,
+                    },
+                    context=self._context
+                )
+            )
         if self._browse_media_entity:
             return await self._browse_media_entity.async_browse_media(
                 media_content_type, media_content_id
@@ -678,6 +732,22 @@ class TemplateMediaPlayer(TemplateEntity, MediaPlayerEntity):
         query: SearchMediaQuery,
     ) -> SearchMedia:
         """Search the media player."""
+        if CONF_SEARCH_MEDIA_SCRIPT in self._service_scripts:
+            return SearchMedia(
+                result=[
+                    BrowseMedia(**item)
+                    for item
+                    in await self._service_scripts[CONF_SEARCH_MEDIA_SCRIPT].async_run(
+                        {
+                            "media_content_type": query.media_type,
+                            "media_content_id": query.media_id,
+                            "search_query": query.search_query,
+                            "media_filter_classes": media_filter_classes
+                        }
+                ],
+                context=self._context
+            )
+
         if self._search_media_entity:
             return await self._search_media_entity.async_search_media(query)
 

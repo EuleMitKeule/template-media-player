@@ -193,5 +193,56 @@ You can specify an entity using the `base_media_player_entity_id` option to inhe
 
 ### Browse And Search Media
 
+#### Script
+
+You can define a script under `source_scripts` for the `browse_media` and `search_media` services.
+
+Ensure that your script takes the following variables and returns the following schema:
+
+*search_media*  
+Inputs:  
+* media_content_type: string
+* media_content_id: string
+* search_query: string
+* media_filter_classes: list[string]
+
+Output:  
+```yaml
+- media_class: MediaClass | str,
+  media_content_id: str,
+  media_content_type: MediaType | str,
+  title: str,
+  can_play: bool,
+  can_expand: bool,
+  children: Sequence[BrowseMedia] | None = None,
+  children_media_class: MediaClass | str | None = None,
+  thumbnail: str | None = None,
+  not_shown: int = 0,
+  can_search: bool = False,
+```
+
+*browse_media*  
+Inputs:  
+* media_content_type: string
+* media_content_id: string
+
+Output:  
+```yaml
+media_class: MediaClass | str,
+media_content_id: str,
+media_content_type: MediaType | str,
+title: str,
+can_play: bool,
+can_expand: bool,
+children: Sequence[BrowseMedia] | None = None,
+children_media_class: MediaClass | str | None = None,
+thumbnail: str | None = None,
+not_shown: int = 0,
+can_search: bool = False,
+```
+
+#### Entities
+
+To use a media_player entity
 You can specify an entity to use for the browse media and search media functionalities using the `browse_media_entity_id` and `search_media_entity_id` options.<br>
 Make sure you also define the `play_media` service for this to work.
