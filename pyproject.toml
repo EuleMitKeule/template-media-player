@@ -20,7 +20,7 @@ classifiers = [
 ]
 description = ""
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13.2"
 version = "0.0.0"
 dependencies = []
 
@@ -29,3 +29,8 @@ Repository = "https://github.com/eulemitkeule/template-media-player"
 Documentation = "https://github.com/eulemitkeule/template-media-player/blob/master/README.md"
 Changelog = "https://github.com/EuleMitKeule/template-media-player/releases"
 Issues = "https://github.com/eulemitkeule/template-media-player/issues"
+
+[dependency-groups]
+dev = [
+    "homeassistant>=2025.12.0",
+]
