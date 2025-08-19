@@ -1,0 +1,314 @@
+platform: template_media_player
+media_players:
+  movie_room:
+    unique_id: media_player_movie_room
+    name: Movie Room
+    device_class: tv
+    base_media_player_entity_id: media_player.movie_room_tv_plex
+    variables:
+      active_media_player: |-
+        {%- if has_value("media_player.movie_room_tv_plex") -%}
+          media_player.movie_room_tv_plex
+        {%- else -%}
+          media_player.z9x_8k
+        {%- endif -%}
+      base_media_player: media_player.z9x_8k
+      plex_media_player: media_player.movie_room_tv_plex
+      volume_media_player: media_player.marantz_sr6015
+    browse_media_entity_id: media_player.movie_room_tv_plex
+    availability: |-
+      {{ True }}
+    icon: mdi:television
+    state: |-
+      {{ states(active_media_player) }}
+    attributes:
+      app_id: |-
+        {{ "Plex" if has_value(plex_media_player) else state_attr(base_media_player, "app_id") }}
+      app_name: |-
+        {{ "Plex" if has_value(plex_media_player) else state_attr(base_media_player, "app_name") }}
+      entity_picture: |-
+        {{ state_attr(active_media_player, "entity_picture") }}
+      media_album_artist: |-
+        {{ state_attr(active_media_player, "media_album_artist") }}
+      media_album_name: |-
+        {{ state_attr(active_media_player, "media_album_name") }}
+      media_artist: |-
+        {{ state_attr(active_media_player, "media_artist") }}
+      media_channel: |-
+        {{ state_attr(active_media_player, "media_channel") }}
+      media_content_id: |-
+        {{ state_attr(active_media_player, "media_content_id") }}
+      media_content_rating: |-
+        {{ state_attr(active_media_player, "media_content_rating") }}
+      media_content_type: |-
+        {{ state_attr(active_media_player, "media_content_type") }}
+      media_duration: |-
+        {{ state_attr(active_media_player, "media_duration") }}
+      media_episode: |-
+        {{ state_attr(active_media_player, "media_episode") }}
+      media_image_hash: |-
+        {{ state_attr(active_media_player, "media_image_hash") }}
+      media_image_remotely_accessible: |-
+        {{ state_attr(active_media_player, "media_image_remotely_accessible") }}
+      media_image_url: |-
+        {{ state_attr(active_media_player, "media_image_url") }}
+      media_library_title: |-
+        {{ state_attr(active_media_player, "media_library_title") }}
+      media_playlist: |-
+        {{ state_attr(active_media_player, "media_playlist") }}
+      media_position: |-
+        {{ state_attr(active_media_player, "media_position") }}
+      media_position_updated_at: |-
+        {{ state_attr(active_media_player, "media_position_updated_at") }}
+      media_season: |-
+        {{ state_attr(active_media_player, "media_season") }}
+      media_series_title: |-
+        {{ state_attr(active_media_player, "media_series_title") }}
+      media_summary: |-
+        {{ state_attr(active_media_player, "media_summary") }}
+      media_title: |-
+        {{ state_attr(active_media_player, "media_title") }}
+      media_track: |-
+        {{ state_attr(active_media_player, "media_track") }}
+      player_source: |-
+        {{ state_attr(active_media_player, "player_source") }}
+      repeat: |-
+        {{ state_attr(active_media_player, "repeat") }}
+      seek_position: |-
+        {{ state_attr(active_media_player, "seek_position") }}
+      shuffle: |-
+        {{ state_attr(active_media_player, "shuffle") }}
+      sound_mode: |-
+        {{ state_attr(active_media_player, "sound_mode") }}
+      source: |-
+        {%- if has_value(plex_media_player) -%}
+          Plex
+        {%- else -%}
+          {{ state_attr(active_media_player, "source") }}
+        {%- endif -%}
+      username: |-
+        {{ state_attr(active_media_player, "username") }}
+      volume_level: |-
+        {{ state_attr(volume_media_player, "volume_level") }}
+      is_volume_muted: |-
+        {{ state_attr(volume_media_player, "is_volume_muted") }}
+    service_scripts:
+      media_next_track:
+      - service: media_player.media_next_track
+        target:
+          entity_id: "{{ active_media_player }}"
+      media_pause:
+      - service: media_player.media_pause
+        target:
+          entity_id: "{{ active_media_player }}"
+      media_play:
+      - service: media_player.media_play
+        target:
+          entity_id: "{{ active_media_player }}"
+      media_play_pause:
+      - service: media_player.media_play_pause
+        target:
+          entity_id: "{{ active_media_player }}"
+      media_previous_track:
+      - service: media_player.media_previous_track
+        target:
+          entity_id: "{{ active_media_player }}"
+      search_media:
+      - service: media_player.play_media
+        target:
+          entity_id: "{{ plex_media_player }}"
+        data:
+          media_type: "{{ media_content_type }}"
+          media_id: |-
+            {%- if media_content_id | default(None) is not nont -%}
+            {{ media_content_id }}
+            {%- else -%}
+            {
+              "library_name": {{ media_content_type }},
+              "title": {{ search_query }}
+            }
+            {%- endif -%}
+        response_variable: media_response
+      media_seek: # {{ position }}
+      - service: media_player.media_seek
+        target:
+          entity_id: "{{ active_media_player }}"
+        data:
+          position: "{{ position }}"
+      media_stop:
+      - service: media_player.media_stop
+        target:
+          entity_id: "{{ active_media_player }}"
+      repeat_set: # {{ repeat }}
+      - service: media_player.repeat_set
+        target:
+          entity_id: "{{ active_media_player }}"
+        data:
+          repeat: "{{ repeat }}"
+      shuffle_set: # {{ shuffle }}
+      - service: media_player.shuffle_set
+        target:
+          entity_id: "{{ active_media_player }}"
+        data:
+          shuffle: "{{ shuffle }}"
+      toggle:
+      - service: media_player.toggle
+        target:
+          entity_id: "{{ base_media_player }}"
+      turn_on:
+      - service: media_player.turn_on
+        target:
+          entity_id: "{{ base_media_player }}"
+      turn_off:
+      - service: media_player.turn_off
+        target:
+          entity_id: "{{ base_media_player }}"
+      volume_down:
+      - service: media_player.volume_down
+        target:
+          entity_id: "{{ volume_media_player }}"
+      volume_mute: # {{ mute }}
+      - service: media_player.volume_mute
+        target:
+          entity_id: "{{ volume_media_player }}"
+        data:
+          mute: "{{ mute }}"
+      volume_set: # {{ volume }}
+      - service: media_player.volume_set
+        target:
+          entity_id: "{{ volume_media_player }}"
+        data:
+          volume_level: "{{ volume }}"
+      volume_up:
+      - service: media_player.volume_up
+        target:
+          entity_id: "{{ volume_media_player }}"
+      play_media: # {{ media_id }} {{ media_type }}
+      - service: media_player.play_media
+        target:
+          entity_id: "{{ plex_media_player }}"
+        data:
+          media_type: "{{ media_type }}"
+          media_title: "{{ media_id }}"
+
+    sound_mode_scripts:
+      MUSIC:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: MUSIC
+      MOVIE:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: MOVIE
+      GAME:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: GAME
+      AUTO:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: AUTO
+      STANDARD:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: STANDARD
+      VIRTUAL:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: VIRTUAL
+      MATRIX:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: MATRIX
+      ROCK ARENA:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: ROCK ARENA
+      JAZZ CLUB:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: JAZZ CLUB
+      VIDEO GAME:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: VIDEO GAME
+      MONO MOVIE:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: MONO MOVIE
+      DIRECT:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: DIRECT
+      PURE DIRECT:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: PURE DIRECT
+      DOLBY DIGITAL:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: DOLBY DIGITAL
+      DTS SURROUND:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: DTS SURROUND
+      AURO3D:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: AURO3D
+      AURO2DSURR:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: AURO2DSURR
+      MCH STEREO:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: MCH STEREO
+      STEREO:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: STEREO
+      ALL ZONE STEREO:
+      - service: media_player.select_sound_mode
+        target:
+          entity_id: media_player.marantz_sr6015
+        data:
+          sound_mode: ALL ZONE STEREO
