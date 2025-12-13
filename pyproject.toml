@@ -33,4 +33,6 @@ Issues = "https://github.com/eulemitkeule/template-media-player/issues"
 [dependency-groups]
 dev = [
     "homeassistant>=2025.12.0",
+    "mypy>=1.19.0",
+    "ruff>=0.14.9",
 ]
