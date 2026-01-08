@@ -70,6 +70,7 @@ from .const import (
     CONF_VOLUME_MUTE_SCRIPT,
     CONF_VOLUME_SET_SCRIPT,
     CONF_VOLUME_UP_SCRIPT,
+    CONF_AVAILABILITY
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -132,6 +133,11 @@ class TemplateMediaPlayer(TemplateEntity, MediaPlayerEntity):
         """Initialize the Template Media player."""
         unique_id: str | None = config.get(CONF_UNIQUE_ID, name)
         TemplateEntity.__init__(self, hass, config, unique_id)
+
+        self._availability_template: Template | None = config.get(CONF_AVAILABILITY)
+        self._icon_template: Template | None = config.get(CONF_ICON)
+        self._friendly_name_template: Template | None = config.get(CONF_NAME)
+        self._entity_picture_template: Template | None = config.get(CONF_PICTURE)
 
         self._attr_device_class = config.get(CONF_DEVICE_CLASS)
         self._attr_should_poll = False
