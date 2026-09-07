@@ -193,5 +193,27 @@ You can specify an entity using the `base_media_player_entity_id` option to inhe
 
 ### Browse And Search Media
 
-You can specify an entity to use for the browse media and search media functionalities using the `browse_media_entity_id` and `search_media_entity_id` options.<br>
-Make sure you also define the `play_media` service for this to work.
+You can specify an entity to use for the browse media and search media functionalities using the `browse_media_entity_id` and `search_media_entity_id` options.  
+Make sure you also define the `play_media` service for this to work. These options keep working as before; `browse_media_sources` is optional and only used when you want multiple libraries as folders.
+
+To show several libraries (Plex, Spotify, …) as folders in the media browser, use `browse_media_sources` in addition. Each entry can point at a media player entity and/or a `media_source` domain. Thumbnails default to the Home Assistant brand icon of that integration (`entity_id` platform, `media_source`, or an explicit `domain`). If an extra attribute `player` is set to a `media_player.*` entity, album art is taken from that child; otherwise `picture` / `entity_picture` templates behave as they did previously.
+
+```yaml
+media_player:
+  - platform: template_media_player
+    media_players:
+      my_media_player:
+        # ...
+        browse_media_sources:
+          Plex:
+            entity_id: media_player.plex_living_room
+            source: Plex  # optional: select this source before playing
+          Spotify:
+            entity_id: media_player.spotify
+            source: Spotify
+            media_source: spotify  # optional fallback when the player is unavailable
+            # thumbnail: https://example.com/spotify.png  # optional override
+            # domain: spotify  # optional brand-icon override
+```
+
+`source` is the template player's own source name (from `source_scripts`) and is selected before playback. Service names are not hardcoded — any integration that exposes browse/play on a media player or media source works.

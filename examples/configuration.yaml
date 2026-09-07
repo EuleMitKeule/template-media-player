@@ -10,6 +10,14 @@ media_player:
         base_media_player_entity_id:
         browse_media_entity_id:
         search_media_entity_id:
+        browse_media_sources:
+          Plex:
+            entity_id:
+            source:
+          Spotify:
+            entity_id:
+            source:
+            media_source:
         variables:
         availability:
         icon:
