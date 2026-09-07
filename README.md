@@ -95,8 +95,8 @@ media_player:
 #### Variables
 
 To reduce code duplication you can also define variables using the `variables` option.
-This is a dictionary of variables that are calculated once on startup and can be used in all templates of the media player entity.
-Unlike `global_template`, variables are only calculated once when the entity is initialized.<br>
+This is a dictionary of variables that can be used in all templates of the media player entity **and** in `service_scripts`, `source_scripts`, and `sound_mode_scripts`.
+Unlike `global_template` (which is prepended only to entity templates, not scripts), `variables` are passed into scripts when they run.
 
 ```yaml
 media_player:
@@ -108,6 +108,11 @@ media_player:
           tv: "media_player.tv"
         state: >
           {{ states(tv) }}
+        service_scripts:
+          media_play:
+            - action: media_player.media_play
+              target:
+                entity_id: "{{ tv }}"
 ```
 
 ### Scripts
@@ -193,10 +198,22 @@ You can specify an entity using the `base_media_player_entity_id` option to inhe
 
 ### Browse And Search Media
 
-You can specify an entity to use for the browse media and search media functionalities using the `browse_media_entity_id` and `search_media_entity_id` options.  
-Make sure you also define the `play_media` service for this to work. These options keep working as before; `browse_media_sources` is optional and only used when you want multiple libraries as folders.
+Existing configs keep working. You can combine these options; they are tried in this order:
 
-To show several libraries (Plex, Spotify, …) as folders in the media browser, use `browse_media_sources` in addition. Each entry can point at a media player entity and/or a `media_source` domain. Thumbnails default to the Home Assistant brand icon of that integration (`entity_id` platform, `media_source`, or an explicit `domain`). If an extra attribute `player` is set to a `media_player.*` entity, album art is taken from that child; otherwise `picture` / `entity_picture` templates behave as they did previously.
+1. `browse_media_sources` for the folder tree (and for playback of items picked there)
+2. `service_scripts.browse_media` / `service_scripts.search_media` for a fully custom tree
+3. `browse_media_entity_id` / `search_media_entity_id` (or `base_media_player_entity_id`)
+
+`play_media` is still required unless a browse source already knows which entity should play.
+
+#### Delegate to another media player
+
+You can specify an entity to use for browse media and search media using `browse_media_entity_id` and `search_media_entity_id`.  
+Make sure you also define the `play_media` service for this to work.
+
+#### Multiple libraries as folders
+
+To show several libraries (Plex, Spotify, …) as folders in the media browser, use `browse_media_sources`. Each entry can point at a media player entity and/or a `media_source` domain. Thumbnails default to the Home Assistant brand icon of that integration (`entity_id` platform, `media_source`, or an explicit `domain`). If an extra attribute `player` is set to a `media_player.*` entity, album art is taken from that child; otherwise `picture` / `entity_picture` templates behave as they did previously.
 
 ```yaml
 media_player:
@@ -217,3 +234,39 @@ media_player:
 ```
 
 `source` is the template player's own source name (from `source_scripts`) and is selected before playback. Service names are not hardcoded — any integration that exposes browse/play on a media player or media source works.
+
+#### Custom browse / search scripts
+
+You can define `browse_media` and `search_media` under `service_scripts` when you need a custom tree. Scripts receive the entity `variables` plus the inputs below, and must return data via `response_variable` (the last responding action’s `service_response`).
+
+*browse_media*  
+Inputs: `media_content_type`, `media_content_id`  
+Output: a dictionary matching Home Assistant `BrowseMedia`:
+
+```yaml
+media_class: directory
+media_content_id: ""
+media_content_type: apps
+title: Media
+can_play: false
+can_expand: true
+children: []          # optional
+children_media_class: app
+thumbnail:            # optional
+not_shown: 0          # optional
+can_search: false     # optional
+```
+
+*search_media*  
+Inputs: `media_content_type`, `media_content_id`, `search_query`, `media_filter_classes`  
+Output:
+
+```yaml
+media:
+  - media_class: track
+    media_content_id: ...
+    media_content_type: music
+    title: ...
+    can_play: true
+    can_expand: false
+```

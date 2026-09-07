@@ -81,6 +81,8 @@ media_player:
           clear_playlist:
           join:
           play_media: # {{ media_id }} {{ media_type }}
+          browse_media: # {{ media_content_type }} {{ media_content_id }}
+          search_media: # {{ search_query }} {{ media_content_type }} {{ media_content_id }} {{ media_filter_classes }}
           unjoin:
         sound_mode_scripts:
         source_scripts:
