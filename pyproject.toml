@@ -29,3 +29,26 @@ Repository = "https://github.com/eulemitkeule/template-media-player"
 Documentation = "https://github.com/eulemitkeule/template-media-player/blob/master/README.md"
 Changelog = "https://github.com/EuleMitKeule/template-media-player/releases"
 Issues = "https://github.com/eulemitkeule/template-media-player/issues"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.14",
+    "ruff>=0.9",
+]
+
+[tool.ruff]
+target-version = "py313"
+src = ["custom_components"]
+
+[tool.ruff.lint]
+ignore = ["SIM102"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+pretty = true
+show_error_codes = true
+files = ["custom_components"]

@@ -1,15 +1,15 @@
 """Template Media Player Component for Home Assistant."""
 
-from collections.abc import Callable, Sequence
-from functools import partial
 import importlib
 import inspect
 import json
 import logging
+from collections.abc import Callable, Sequence
+from functools import partial
 from typing import Any, cast
 
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-
 from homeassistant.components.media_player import (
     DOMAIN as MEDIA_PLAYER_DOMAIN,
     PLATFORM_SCHEMA as MEDIA_PLAYER_PLATFORM_SCHEMA,
@@ -33,7 +33,6 @@ from homeassistant.components.media_source import (
 from homeassistant.components.template.template_entity import TemplateEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, TemplateError
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -56,6 +55,8 @@ from .const import (
     CONF_GLOBAL_TEMPLATE,
     CONF_ICON,
     CONF_JOIN_SCRIPT,
+    CONF_MEDIA_CONTENT_ID,
+    CONF_MEDIA_CONTENT_TYPE,
     CONF_MEDIA_NEXT_TRACK_SCRIPT,
     CONF_MEDIA_PAUSE_SCRIPT,
     CONF_MEDIA_PLAY_PAUSE_SCRIPT,
@@ -63,8 +64,6 @@ from .const import (
     CONF_MEDIA_PLAYERS,
     CONF_MEDIA_PREVIOUS_TRACK_SCRIPT,
     CONF_MEDIA_SEEK_SCRIPT,
-    CONF_MEDIA_CONTENT_ID,
-    CONF_MEDIA_CONTENT_TYPE,
     CONF_MEDIA_SOURCE,
     CONF_MEDIA_STOP_SCRIPT,
     CONF_NAME,
@@ -672,6 +671,7 @@ class TemplateMediaPlayer(TemplateEntity, MediaPlayerEntity):
         browse_entity = entity is not None
         if (
             browse_entity
+            and entity is not None
             and media_source
             and not start_id
             and not media_content_id
@@ -680,7 +680,7 @@ class TemplateMediaPlayer(TemplateEntity, MediaPlayerEntity):
         ):
             # entity_id is only the play target (e.g. Music Assistant for Radio).
             browse_entity = False
-        if browse_entity:
+        if browse_entity and entity is not None:
             try:
                 result = await entity.async_browse_media(
                     media_content_type, media_content_id
@@ -838,7 +838,7 @@ class TemplateMediaPlayer(TemplateEntity, MediaPlayerEntity):
             support |= MediaPlayerEntityFeature.PLAY
         if CONF_SHUFFLE_SET_SCRIPT in self._service_scripts:
             support |= MediaPlayerEntityFeature.SHUFFLE_SET
-        if len(self.sound_mode_list) > 0:
+        if self.sound_mode_list:
             support |= MediaPlayerEntityFeature.SELECT_SOUND_MODE
         if (
             self._browse_media_entity_id
@@ -1108,7 +1108,7 @@ class TemplateMediaPlayer(TemplateEntity, MediaPlayerEntity):
 
     async def async_select_sound_mode(self, sound_mode) -> None:
         """Select sound mode."""
-        if sound_mode not in self.sound_mode_list:
+        if sound_mode not in (self.sound_mode_list or []):
             return
 
         if script := self._sound_mode_scripts.get(sound_mode):

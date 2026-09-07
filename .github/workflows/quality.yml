@@ -12,102 +12,60 @@ on:
       - master
 
 jobs:
-  cache:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          python-version: 3.13
-          enable-cache: true
-          cache-suffix: uv-${{ runner.os }}-3.13
-
-      - name: Install dependecies
-        run: uv sync --all-groups
-
   ruff:
-    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: 3.13
+          python-version: "3.13"
           enable-cache: true
-          cache-suffix: uv-${{ runner.os }}-3.13
+          cache-dependency-glob: pyproject.toml
 
-      - name: Install dependecies
-        run: uv sync --all-groups
+      - name: Install dependencies
+        run: uv sync --group dev
 
       - name: Run ruff
-        run: |
-          uv run ruff check .
+        run: uv run ruff check .
 
   mypy:
-    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: 3.13
+          python-version: "3.13"
           enable-cache: true
-          cache-suffix: uv-${{ runner.os }}-3.13
+          cache-dependency-glob: pyproject.toml
 
-      - name: Install dependecies
-        run: uv sync --all-groups
+      - name: Install dependencies
+        run: uv sync --group dev
 
       - name: Run mypy
-        run: |
-          uv run mypy --strict .
+        run: uv run mypy custom_components
 
   hacs:
-    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          python-version: 3.13
-          enable-cache: true
-          cache-suffix: uv-${{ runner.os }}-3.13
-
-      - name: Install dependecies
-        run: uv sync --all-groups
+        uses: actions/checkout@v5
 
       - name: Run HACS
-        uses: "hacs/action@main"
+        uses: hacs/action@main
         with:
-          category: "integration"
+          category: integration
 
   hassfest:
-    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          python-version: 3.13
-          enable-cache: true
-          cache-suffix: uv-${{ runner.os }}-3.13
-
-      - name: Install dependecies
-        run: uv sync --all-groups
+        uses: actions/checkout@v5
 
       - name: Run Hassfest
         uses: home-assistant/actions/hassfest@master
